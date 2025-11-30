@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Firebase Realtime Chat</title>
+    <title>Firebase Realtime Chat - Light</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
+        /* ИЗМЕНЕНИЕ: Светлая тема */
         :root {
-            --bg-color: #0b141a;
-            --header-bg: #1f2c34;
-            --my-msg-bg: #005c4b;
-            --other-msg-bg: #202c33;
-            --primary: #00a884;
+            --bg-color: #f0f2f5; /* Светлый фон */
+            --header-bg: #008069; /* Зеленый хедер */
+            --header-text: #ffffff; /* Белый текст */
+            --my-msg-bg: #d9fdd3; /* Светло-зеленый (мой) */
+            --other-msg-bg: #ffffff; /* Белый (чужой) */
+            --text-color: #000000; /* Черный текст */
+            --primary: #008069; /* Основной цвет */
+            --input-bg: #ffffff; /* Белый ввод */
+            --log-bg: #e9e9e9; /* Светлый фон для лога */
+            --log-text: #666666; /* Серый текст для лога */
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
-            color: #e9edef;
+            color: var(--text-color);
             margin: 0;
             height: 100vh;
             display: flex;
@@ -31,26 +37,26 @@
         /* === ЭКРАН ВХОДА === */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111b21; z-index: 2000;
+            background: var(--bg-color); z-index: 2000;
             display: flex; flex-direction: column; justify-content: center;
             align-items: center; padding: 20px; box-sizing: border-box;
         }
 
         .login-box {
             width: 100%; max-width: 320px; text-align: center;
-            background: #202c33; padding: 20px; border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background: var(--other-msg-bg); padding: 20px; border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         .login-input {
             width: 100%; padding: 14px; margin: 10px 0;
-            border: 1px solid #2a3942; background: #2a3942;
-            color: white; border-radius: 8px; font-size: 16px;
+            border: 1px solid #cccccc; background: var(--input-bg);
+            color: var(--text-color); border-radius: 8px; font-size: 16px;
             box-sizing: border-box; outline: none;
         }
 
         .btn {
-            background: var(--primary); color: #111b21; border: none;
+            background: var(--primary); color: var(--header-text); border: none;
             padding: 14px; width: 100%; border-radius: 8px;
             font-size: 16px; font-weight: bold; cursor: pointer;
             margin-top: 10px;
@@ -66,76 +72,95 @@
             background: var(--header-bg); padding: 10px 15px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10;
+            color: var(--header-text);
         }
 
-        .header-info h2 { margin: 0; font-size: 17px; color: #e9edef; }
-        .typing-indicator { font-size: 12px; color: var(--primary); height: 14px; font-weight: 500;}
+        .header-info h2 { margin: 0; font-size: 17px; color: var(--header-text); }
+        .version-tag { font-size: 10px; color: rgba(255,255,255,0.7); margin-left: 8px; font-weight: normal; } 
+        .typing-indicator { font-size: 12px; color: #ffffff; height: 14px; font-weight: 500;}
 
         /* Область сообщений */
         #messages-area {
             flex: 1; overflow-y: auto; padding: 15px 15px 80px 15px;
             display: flex; flex-direction: column; gap: 8px;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-size: 400px; background-blend-mode: overlay; background-color: #0b141a;
+            /* Убрано фоновое изображение, чтобы светлая тема была чистой */
+            background-color: var(--bg-color);
         }
 
         .message {
             max-width: 80%; padding: 8px 10px; border-radius: 8px;
             position: relative; word-wrap: break-word; font-size: 15px;
             line-height: 1.4; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            color: var(--text-color);
         }
 
         .message.mine {
             align-self: flex-end; background: var(--my-msg-bg);
-            color: var(--my-msg-text); border-top-right-radius: 0;
+            border-top-right-radius: 0;
         }
 
         .message.others {
             align-self: flex-start; background: var(--other-msg-bg);
-            color: var(--other-msg-text); border-top-left-radius: 0;
+            border: 1px solid #f0f0f0;
+            border-top-left-radius: 0;
         }
 
         .msg-sender {
-            font-size: 11px; font-weight: bold; color: #F5C518;
+            font-size: 11px; font-weight: bold; color: var(--primary);
             margin-bottom: 2px; display: block;
         }
 
         .msg-meta {
-            font-size: 10px; color: rgba(255,255,255,0.6);
+            font-size: 10px; color: #888888;
             text-align: right; margin-top: 4px; display: flex;
             justify-content: flex-end; gap: 8px; align-items: center;
         }
 
         .msg-img { max-width: 100%; border-radius: 6px; margin-top: 5px; margin-bottom: 5px; }
-        .msg-actions { font-size: 14px; cursor: pointer; color: rgba(255,255,255,0.7); }
+        .msg-actions { font-size: 14px; cursor: pointer; color: #888888; }
 
         /* === ПАНЕЛЬ ВВОДА === */
         .input-area {
             position: absolute; bottom: 0; left: 0; width: 100%;
-            background: #202c33; padding: 10px; display: flex;
+            background: var(--bg-color); padding: 10px; display: flex;
             align-items: center; gap: 10px; box-sizing: border-box; z-index: 20;
+            border-top: 1px solid #dddddd;
         }
 
         #msg-input {
             flex: 1; padding: 12px 15px; border-radius: 20px;
-            border: none; background: #2a3942; color: white;
-            font-size: 16px; outline: none;
+            border: none; background: var(--input-bg); color: var(--text-color);
+            font-size: 16px; outline: none; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
         
         .icon-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 0 5px; color: #8696a0; display: flex; align-items: center; justify-content: center; }
         .icon-btn.send { color: var(--primary); }
 
         #file-input { display: none; }
-        #online-users { background: #111b21; padding: 6px; font-size: 11px; color: #8696a0; text-align: center; border-bottom: 1px solid #202c33; }
-        .logout-btn { background: none; border: 1px solid #ef5350; color: #ef5350; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+        #online-users { background: #e0e0e0; padding: 6px; font-size: 11px; color: #666666; text-align: center; border-bottom: 1px solid #cccccc; }
+        .logout-btn { background: none; border: 1px solid #cc0000; color: #cc0000; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
 
+        /* === НОВЫЙ ЛОГ СОСТОЯНИЯ === */
+        #status-log {
+            background: var(--log-bg);
+            color: var(--log-text);
+            font-family: monospace;
+            font-size: 10px;
+            padding: 5px 15px;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-bottom: 1px solid #cccccc;
+        }
+        .log-entry { margin-right: 15px; display: inline-block; }
+        .log-entry.write { color: #cc0000; }
+        .log-entry.read { color: var(--primary); }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-box">
-            <h1 style="color:white; margin-top:0;">🔐 Вход в Чат</h1>
+            <h1 style="color:var(--text-color); margin-top:0;">🔐 Вход в Чат</h1>
             <p style="color:#8696a0; font-size: 13px;">Введите пароль и имя</p>
             <input type="password" id="password" class="login-input" placeholder="Пароль чата">
             <input type="text" id="username" class="login-input" placeholder="Ваше имя" maxlength="15">
@@ -147,15 +172,14 @@
     <div id="chat-container">
         <header>
             <div class="header-info">
-                <h2>Реально-временной Чат</h2>
+                <h2>Реально-временной Чат <span class="version-tag">v2.2 (Light)</span></h2>
                 <div class="typing-indicator" id="typing-indicator"></div>
             </div>
             <button class="logout-btn" onclick="logout()">Выйти</button>
         </header>
 
         <div id="online-users"></div>
-
-        <div id="messages-area"></div>
+        <div id="status-log"></div> <div id="messages-area"></div>
 
         <div class="input-area">
             <input type="file" id="file-input" accept="image/*" onchange="handleImageUpload(this)">
@@ -183,28 +207,75 @@
 
         let currentUser = { name: "", ip: "", device: "" };
         let typingTimeout;
-        let db;
         
-        // --- ИНИЦИАЛИЗАЦИЯ ---
+        let db; 
+        let lastStatusUpdateTime = Date.now();
+        const MAX_LOG_ENTRIES = 5; // Максимальное количество записей в логе
         
+        // --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
         try {
-            // Инициализация использует переменную FIREBASE_CONFIG
             firebase.initializeApp(FIREBASE_CONFIG);
             db = firebase.firestore();
+            logStatus('INIT', 'Firebase initialized');
         } catch (e) {
-            console.error("Firebase Initialization Error. Check your config keys!");
-            alert("Ошибка Firebase. Проверьте ключи в коде.");
+            console.error("Firebase Initialization Error. Check your config keys!", e);
+            document.getElementById('login-error').innerText = "Ошибка: Проверьте ключи Firebase в коде.";
         }
 
         document.getElementById('send-btn').addEventListener('click', sendMessage);
         document.getElementById('msg-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
+        
+        // --- ФУНКЦИЯ ЛОГИРОВАНИЯ СОСТОЯНИЯ (НОВАЯ) ---
+        function logStatus(type, message) {
+            const logElement = document.getElementById('status-log');
+            const now = new Date().toLocaleTimeString();
+            const entry = document.createElement('span');
+            entry.className = 'log-entry';
+
+            let tag = '';
+            let cls = '';
+            
+            // Форматирование для "машинного языка"
+            switch (type) {
+                case 'WRITE':
+                    tag = 'Firestore: WRITE complete (Sent)';
+                    cls = 'write';
+                    break;
+                case 'READ':
+                    tag = 'Firestore: READ/LISTEN complete (Received)';
+                    cls = 'read';
+                    break;
+                case 'UPDATE_STATUS':
+                    tag = 'Firestore: WRITE User Status';
+                    cls = 'write';
+                    break;
+                case 'INIT':
+                    tag = 'SDK: Initialized';
+                    break;
+                default:
+                    tag = message;
+            }
+
+            entry.innerHTML = `<span class="${cls}">[${now}] ${tag}</span>`;
+
+            // Добавляем новую запись в начало
+            if (logElement.children.length >= MAX_LOG_ENTRIES) {
+                // Удаляем последнюю (самую старую) запись
+                logElement.removeChild(logElement.lastChild); 
+            }
+            logElement.prepend(entry);
+        }
 
         // --- ВХОД И АВТОРИЗАЦИЯ ---
 
         async function attemptLogin() {
-            // Проверка пароля происходит здесь:
+            if (!db) {
+                document.getElementById('login-error').innerText = "Ошибка: Firebase не подключен.";
+                return;
+            }
+
             const pass = document.getElementById('password').value;
             const name = document.getElementById('username').value.trim();
             const err = document.getElementById('login-error');
@@ -228,7 +299,7 @@
             } catch (e) { currentUser.ip = "Unknown"; }
 
             const ua = navigator.userAgent;
-            if (ua.match(/iPhone/i)) currentUser.device = "iPhone/iOS";
+            if (ua.match(/iPhone|iPad|iPod/i)) currentUser.device = "iPhone/iOS";
             else if (ua.match(/Android/i)) currentUser.device = "Android";
             else if (ua.match(/Windows/i)) currentUser.device = "PC";
             else currentUser.device = "Web";
@@ -244,49 +315,44 @@
         // --- СЕССИЯ И РЕАЛЬНОЕ ВРЕМЯ ---
 
         function startChatSession() {
-            // Устанавливаем статус как "онлайн"
             setUserStatus({ isOnline: true, isTyping: false });
-            
-            // Устанавливаем слушатели на изменения в базе данных
             setupFirestoreListeners();
+            setInterval(checkInactivity, 10000); 
+
+            document.addEventListener('touchstart', updateActivity);
+            document.addEventListener('keydown', updateActivity);
+            document.addEventListener('mousemove', updateActivity);
             
-            // Начинаем проверку бездействия
-            setInterval(checkInactivity, 10000); // Проверка каждые 10 сек
-
-            // Обновляем статус активности (для тайм-аута и статуса)
-            ['mousemove','keydown','touchstart'].forEach(evt => 
-                document.addEventListener(evt, () => {
-                    localStorage.setItem('lastActive', Date.now());
-                    // Обновляем статус онлайн каждые 30 секунд, если активен
-                    if (Date.now() - (lastStatusUpdateTime || 0) > 30000) {
-                        setUserStatus({ isOnline: true, isTyping: false });
-                    }
-                })
-            );
-
-            // Убираем статус при закрытии вкладки
             window.addEventListener('beforeunload', () => setUserStatus({ isOnline: false }));
         }
+        
+        function updateActivity() {
+            localStorage.setItem('lastActive', Date.now());
+            if (Date.now() - lastStatusUpdateTime > 30000) {
+                setUserStatus({ isOnline: true, isTyping: false });
+            }
+        }
 
-        let lastStatusUpdateTime = Date. середина
         async function setUserStatus(statusUpdate) {
             if (!db || !currentUser.name) return;
             
-            // Используем имя как основной ключ документа
-            await db.collection('users').doc(currentUser.name).set({
-                name: currentUser.name,
-                ...statusUpdate,
-                device: currentUser.device,
-                ip: currentUser.ip,
-                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true }); // Используем merge, чтобы не перезаписывать полностью
-            
-            lastStatusUpdateTime = Date.now();
+            try {
+                await db.collection('users').doc(currentUser.name).set({
+                    name: currentUser.name,
+                    ...statusUpdate,
+                    device: currentUser.device,
+                    ip: currentUser.ip,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }); 
+                logStatus('UPDATE_STATUS');
+                lastStatusUpdateTime = Date.now();
+            } catch (e) {
+                console.error("Failed to update status", e);
+            }
         }
 
         function checkInactivity() {
             const lastActive = localStorage.getItem('lastActive') || Date.now();
-            // 3 минуты = 180000 мс
             if (Date.now() - lastActive > 180000) {
                 alert("Сеанс завершен из-за бездействия (3 мин)");
                 logout();
@@ -295,7 +361,7 @@
 
         function logout() {
             setUserStatus({ isOnline: false });
-            location.reload();
+            window.location.reload(true); 
         }
         
         // --- FIREBASE LISTENERS ---
@@ -303,6 +369,7 @@
         function setupFirestoreListeners() {
             // 1. Слушатель сообщений
             db.collection('messages').orderBy('timestamp', 'asc').onSnapshot(snapshot => {
+                logStatus('READ'); // Логируем получение
                 const messages = [];
                 snapshot.forEach(doc => messages.push({ ...doc.data(), id: doc.id }));
                 renderMessages(messages);
@@ -325,7 +392,7 @@
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => {
                 setUserStatus({ isTyping: false });
-            }, 2000); // Статус "печатает" держится 2 секунды
+            }, 2000); 
         }
 
         async function sendMessage() {
@@ -334,19 +401,23 @@
 
             if (!text) return;
 
-            // 1. Асинхронная отправка сообщения
-            await db.collection('messages').add({
-                user: currentUser.name,
-                text: text,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                edited: false
-            });
-            
-            // 2. ИСПРАВЛЕНИЕ: Очистка поля и сброс статуса печати ТОЛЬКО после успешной отправки.
-            input.value = '';
-            // Убедимся, что на iOS поле ввода не теряет фокус полностью
-            input.focus(); 
-            setUserStatus({ isTyping: false });
+            try {
+                await db.collection('messages').add({
+                    user: currentUser.name,
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    edited: false
+                });
+                logStatus('WRITE', 'Сообщение отправлено'); // Логируем отправку
+                
+                input.value = '';
+                input.focus(); 
+                setUserStatus({ isTyping: false });
+
+            } catch(e) {
+                console.error("Ошибка при отправке сообщения:", e);
+                alert("Ошибка отправки. Проверьте соединение и правила Firebase.");
+            }
         }
         
         async function deleteMessage(id) {
@@ -379,7 +450,6 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // Расчет сжатия (уменьшение на 1.5x)
                     const newW = img.width / 1.5;
                     const newH = img.height / 1.5;
                     
@@ -388,10 +458,8 @@
                     
                     ctx.drawImage(img, 0, 0, newW, newH);
                     
-                    // Сжатие качества JPEG (60%)
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); 
                     
-                    // Сохраняем как отдельное сообщение с изображением
                     db.collection('messages').add({
                         user: currentUser.name,
                         text: "🖼️ Изображение",
@@ -399,6 +467,7 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         edited: false
                     });
+                    logStatus('WRITE', 'Изображение отправлено'); // Логируем отправку изображения
                 };
             };
             reader.readAsDataURL(file);
@@ -424,7 +493,7 @@
                 const actions = isMine ? `<span class="msg-actions" onclick="editMessage('${msg.id}')">✏️</span> <span class="msg-actions" onclick="deleteMessage('${msg.id}')">❌</span>` : '';
 
                 div.innerHTML = `
-                    <span class="msg-sender">${msg.user}</span>
+                    <span class="msg-sender" style="color:${isMine ? '#00796b' : '#333'}">${msg.user}</span>
                     <div style="margin-bottom:4px">${msg.text} ${editMark}</div>
                     ${imgHtml}
                     <div class="msg-meta">${time} &nbsp; ${actions}</div>
@@ -440,10 +509,8 @@
             let onlineText = [];
             
             users.forEach(u => {
-                // Считаем онлайн, если lastSeen был меньше 30 секунд назад
                 const lastSeenTime = u.lastSeen ? u.lastSeen.toDate().getTime() : now;
                 if (u.isOnline && now - lastSeenTime < 30000) {
-                    // Вставляем IP и устройство
                     onlineText.push(`${u.name} (${u.device}, ${u.ip})`); 
                 }
             });
@@ -453,7 +520,6 @@
         function renderTypingIndicator(users) {
             const now = Date.now();
             const typers = users
-                // Фильтруем: не я, печатает, и последний раз был виден менее 5 секунд назад
                 .filter(u => u.name !== currentUser.name && u.isTyping && u.lastSeen && (now - u.lastSeen.toDate().getTime() < 5000))
                 .map(u => u.name);
             
