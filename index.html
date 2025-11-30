@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Firebase Realtime Chat - Light</title>
+    <title>Firebase Multi-Chat - Light</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -11,16 +11,16 @@
     <style>
         /* ИЗМЕНЕНИЕ: Светлая тема */
         :root {
-            --bg-color: #f0f2f5; /* Светлый фон */
-            --header-bg: #008069; /* Зеленый хедер */
-            --header-text: #ffffff; /* Белый текст */
-            --my-msg-bg: #d9fdd3; /* Светло-зеленый (мой) */
-            --other-msg-bg: #ffffff; /* Белый (чужой) */
-            --text-color: #000000; /* Черный текст */
-            --primary: #008069; /* Основной цвет */
-            --input-bg: #ffffff; /* Белый ввод */
-            --log-bg: #e9e9e9; /* Светлый фон для лога */
-            --log-text: #666666; /* Серый текст для лога */
+            --bg-color: #f0f2f5; 
+            --header-bg: #008069; 
+            --header-text: #ffffff; 
+            --my-msg-bg: #d9fdd3; 
+            --other-msg-bg: #ffffff; 
+            --text-color: #000000; 
+            --primary: #008069; 
+            --input-bg: #ffffff; 
+            --log-bg: #e9e9e9; 
+            --log-text: #666666; 
         }
 
         body {
@@ -34,12 +34,19 @@
             overflow: hidden;
         }
 
-        /* === ЭКРАН ВХОДА === */
-        #login-screen {
+        /* === ЭКРАНЫ === */
+        #login-screen, #chat-container, #log-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); z-index: 2000;
-            display: flex; flex-direction: column; justify-content: center;
-            align-items: center; padding: 20px; box-sizing: border-box;
+            background: var(--bg-color); z-index: 100;
+            padding: 0; margin: 0; box-sizing: border-box;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #login-screen {
+            display: flex; /* Показываем только экран входа по умолчанию */
+            justify-content: center;
+            align-items: center;
         }
 
         .login-box {
@@ -62,28 +69,27 @@
             margin-top: 10px;
         }
 
-        /* === ЧАТ === */
-        #chat-container {
-            display: none; flex-direction: column; height: 100%;
-            width: 100%; max-width: 800px; margin: 0 auto; position: relative;
-        }
-
+        /* === ХЕДЕР === */
         header {
             background: var(--header-bg); padding: 10px 15px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10;
             color: var(--header-text);
         }
-
         .header-info h2 { margin: 0; font-size: 17px; color: var(--header-text); }
+        .header-info h3 { margin: 0; font-size: 13px; color: rgba(255, 255, 255, 0.8); font-weight: 400; }
         .version-tag { font-size: 10px; color: rgba(255,255,255,0.7); margin-left: 8px; font-weight: normal; } 
         .typing-indicator { font-size: 12px; color: #ffffff; height: 14px; font-weight: 500;}
+        .header-btns button {
+            background: none; border: 1px solid rgba(255,255,255,0.7); 
+            color: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 5px; 
+            font-size: 12px; cursor: pointer; margin-left: 8px;
+        }
 
-        /* Область сообщений */
+        /* === ЧАТ / СООБЩЕНИЯ === */
         #messages-area {
             flex: 1; overflow-y: auto; padding: 15px 15px 80px 15px;
             display: flex; flex-direction: column; gap: 8px;
-            /* Убрано фоновое изображение, чтобы светлая тема была чистой */
             background-color: var(--bg-color);
         }
 
@@ -93,31 +99,23 @@
             line-height: 1.4; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
             color: var(--text-color);
         }
-
-        .message.mine {
-            align-self: flex-end; background: var(--my-msg-bg);
-            border-top-right-radius: 0;
-        }
-
-        .message.others {
-            align-self: flex-start; background: var(--other-msg-bg);
-            border: 1px solid #f0f0f0;
-            border-top-left-radius: 0;
-        }
-
-        .msg-sender {
-            font-size: 11px; font-weight: bold; color: var(--primary);
-            margin-bottom: 2px; display: block;
-        }
-
+        .message.mine { align-self: flex-end; background: var(--my-msg-bg); border-top-right-radius: 0; }
+        .message.others { align-self: flex-start; background: var(--other-msg-bg); border: 1px solid #f0f0f0; border-top-left-radius: 0; }
+        .msg-sender { font-size: 11px; font-weight: bold; margin-bottom: 2px; display: block; }
+        
         .msg-meta {
             font-size: 10px; color: #888888;
             text-align: right; margin-top: 4px; display: flex;
             justify-content: flex-end; gap: 8px; align-items: center;
         }
-
-        .msg-img { max-width: 100%; border-radius: 6px; margin-top: 5px; margin-bottom: 5px; }
-        .msg-actions { font-size: 14px; cursor: pointer; color: #888888; }
+        
+        /* СТАТУС СООБЩЕНИЯ (НОВЫЙ) */
+        .msg-status {
+            font-size: 8px; font-weight: bold; color: #008069;
+            margin-left: 5px;
+        }
+        .msg-status.sent { color: #888888; }
+        .msg-status.delivered { color: #008069; }
 
         /* === ПАНЕЛЬ ВВОДА === */
         .input-area {
@@ -126,21 +124,14 @@
             align-items: center; gap: 10px; box-sizing: border-box; z-index: 20;
             border-top: 1px solid #dddddd;
         }
-
         #msg-input {
             flex: 1; padding: 12px 15px; border-radius: 20px;
             border: none; background: var(--input-bg); color: var(--text-color);
             font-size: 16px; outline: none; box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
-        
-        .icon-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 0 5px; color: #8696a0; display: flex; align-items: center; justify-content: center; }
         .icon-btn.send { color: var(--primary); }
 
-        #file-input { display: none; }
-        #online-users { background: #e0e0e0; padding: 6px; font-size: 11px; color: #666666; text-align: center; border-bottom: 1px solid #cccccc; }
-        .logout-btn { background: none; border: 1px solid #cc0000; color: #cc0000; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
-
-        /* === НОВЫЙ ЛОГ СОСТОЯНИЯ === */
+        /* === ЛОГ СОСТОЯНИЯ (Status Log) === */
         #status-log {
             background: var(--log-bg);
             color: var(--log-text);
@@ -151,9 +142,36 @@
             white-space: nowrap;
             border-bottom: 1px solid #cccccc;
         }
-        .log-entry { margin-right: 15px; display: inline-block; }
-        .log-entry.write { color: #cc0000; }
-        .log-entry.read { color: var(--primary); }
+
+        /* === СТРАНИЦА ЛОГА (Audit Log Screen) === */
+        #log-header {
+            background: var(--header-bg); 
+            color: var(--header-text); 
+            padding: 10px 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        #log-content {
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            background: #ffffff;
+            font-family: monospace;
+            font-size: 12px;
+            color: #333;
+        }
+        .log-entry-item {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px dotted #eee;
+            white-space: pre-wrap;
+        }
+        .log-entry-item .time { color: #999; margin-right: 10px; }
+        .log-entry-item .user { font-weight: bold; color: var(--primary); }
+        .log-entry-item .action { color: #cc0000; }
+        .log-entry-item .auth { color: #00796b; }
+
     </style>
 </head>
 <body>
@@ -161,30 +179,43 @@
     <div id="login-screen">
         <div class="login-box">
             <h1 style="color:var(--text-color); margin-top:0;">🔐 Вход в Чат</h1>
-            <p style="color:#8696a0; font-size: 13px;">Введите пароль и имя</p>
-            <input type="password" id="password" class="login-input" placeholder="Пароль чата">
-            <input type="text" id="username" class="login-input" placeholder="Ваше имя" maxlength="15">
+            <p style="color:#8696a0; font-size: 13px;">Укажите данные</p>
+            <input type="password" id="password" class="login-input" placeholder="Пароль чата (123)">
+            <input type="text" id="chatname" class="login-input" placeholder="Имя Чата (например, Общий)"> <input type="text" id="username" class="login-input" placeholder="Ваше имя" maxlength="15">
             <button class="btn" onclick="attemptLogin()">ВОЙТИ</button>
             <p id="login-error" style="color:#ef5350; font-size: 13px; margin-bottom: 0;"></p>
         </div>
     </div>
 
+    <div id="log-screen">
+        <header id="log-header">
+            <h2>Журнал Действий Чата (<span id="log-chat-name"></span>)</h2>
+            <button onclick="toggleLogScreen()">Назад в чат</button>
+        </header>
+        <div id="log-content">Загрузка логов...</div>
+    </div>
+
     <div id="chat-container">
         <header>
             <div class="header-info">
-                <h2>Реально-временной Чат <span class="version-tag">v2.2 (Light)</span></h2>
-                <div class="typing-indicator" id="typing-indicator"></div>
+                <h2 id="current-chat-name"></h2>
+                <h3><span id="typing-indicator"></span></h3>
             </div>
-            <button class="logout-btn" onclick="logout()">Выйти</button>
+            <div class="header-btns">
+                <button onclick="toggleLogScreen()">Логи</button>
+                <button onclick="logout()">Выйти</button>
+            </div>
         </header>
 
         <div id="online-users"></div>
-        <div id="status-log"></div> <div id="messages-area"></div>
+        <div id="status-log"></div> 
+
+        <div id="messages-area"></div>
 
         <div class="input-area">
             <input type="file" id="file-input" accept="image/*" onchange="handleImageUpload(this)">
             <button class="icon-btn" onclick="document.getElementById('file-input').click()">📷</button>
-            <input type="text" id="msg-input" placeholder="Сообщение" oninput="handleTyping(event)">
+            <input type="text" id="msg-input" placeholder="Сообщение">
             <button class="icon-btn send" id="send-btn">➤</button>
         </div>
     </div>
@@ -205,12 +236,11 @@
         const CHAT_PASSWORD = "123";
         // =======================================================
 
-        let currentUser = { name: "", ip: "", device: "" };
+        let currentUser = { name: "", chat: "", ip: "", device: "" }; // Добавлено 'chat'
         let typingTimeout;
-        
         let db; 
         let lastStatusUpdateTime = Date.now();
-        const MAX_LOG_ENTRIES = 5; // Максимальное количество записей в логе
+        const MAX_LOG_ENTRIES = 5; 
         
         // --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
         try {
@@ -227,7 +257,7 @@
             if (e.key === 'Enter') sendMessage();
         });
         
-        // --- ФУНКЦИЯ ЛОГИРОВАНИЯ СОСТОЯНИЯ (НОВАЯ) ---
+        // --- ФУНКЦИЯ ЛОГИРОВАНИЯ СОСТОЯНИЯ (Status Log - для UI) ---
         function logStatus(type, message) {
             const logElement = document.getElementById('status-log');
             const now = new Date().toLocaleTimeString();
@@ -237,35 +267,99 @@
             let tag = '';
             let cls = '';
             
-            // Форматирование для "машинного языка"
             switch (type) {
-                case 'WRITE':
-                    tag = 'Firestore: WRITE complete (Sent)';
-                    cls = 'write';
-                    break;
-                case 'READ':
-                    tag = 'Firestore: READ/LISTEN complete (Received)';
-                    cls = 'read';
-                    break;
-                case 'UPDATE_STATUS':
-                    tag = 'Firestore: WRITE User Status';
-                    cls = 'write';
-                    break;
-                case 'INIT':
-                    tag = 'SDK: Initialized';
-                    break;
-                default:
-                    tag = message;
+                case 'WRITE': tag = 'Firestore: WRITE complete (Sent)'; cls = 'write'; break;
+                case 'READ': tag = 'Firestore: READ/LISTEN complete (Received)'; cls = 'read'; break;
+                case 'UPDATE_STATUS': tag = 'Firestore: WRITE User Status'; cls = 'write'; break;
+                case 'INIT': tag = 'SDK: Initialized'; break;
+                default: tag = message;
             }
 
             entry.innerHTML = `<span class="${cls}">[${now}] ${tag}</span>`;
 
-            // Добавляем новую запись в начало
             if (logElement.children.length >= MAX_LOG_ENTRIES) {
-                // Удаляем последнюю (самую старую) запись
                 logElement.removeChild(logElement.lastChild); 
             }
             logElement.prepend(entry);
+        }
+        
+        // --- ФУНКЦИЯ ЗАПИСИ АУДИТ ЛОГА (Audit Log - для БД) ---
+        async function recordAudit(action, details = {}) {
+            if (!db || !currentUser.name || !currentUser.chat) return;
+
+            const logRef = db.collection('auditLogs');
+            
+            await logRef.add({
+                chat: currentUser.chat,
+                user: currentUser.name,
+                ip: currentUser.ip,
+                device: currentUser.device,
+                action: action, // 'login', 'logout', 'send', 'read_msg', 'delete'
+                details: details,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        // --- ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ ---
+        function toggleLogScreen() {
+            const chatScreen = document.getElementById('chat-container');
+            const logScreen = document.getElementById('log-screen');
+
+            if (chatScreen.style.display === 'flex') {
+                chatScreen.style.display = 'none';
+                logScreen.style.display = 'flex';
+                loadAuditLog(); // Загружаем данные лога при переключении
+            } else {
+                logScreen.style.display = 'none';
+                chatScreen.style.display = 'flex';
+            }
+        }
+        
+        async function loadAuditLog() {
+            const logContent = document.getElementById('log-content');
+            const chatName = currentUser.chat;
+            document.getElementById('log-chat-name').innerText = chatName;
+            logContent.innerHTML = 'Загрузка истории...';
+
+            try {
+                const logs = await db.collection('auditLogs')
+                    .where('chat', '==', chatName) // Фильтр по текущему чату
+                    .orderBy('timestamp', 'desc')
+                    .limit(100) // Ограничиваем количество записей
+                    .get();
+
+                logContent.innerHTML = ''; // Очистка
+                
+                logs.forEach(doc => {
+                    const data = doc.data();
+                    const time = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString() : '...';
+                    let actionText = '';
+                    let actionClass = 'action';
+                    
+                    switch (data.action) {
+                        case 'login': actionText = 'ВОШЕЛ в чат.'; actionClass = 'auth'; break;
+                        case 'logout': actionText = 'ВЫШЕЛ из чата.'; actionClass = 'auth'; break;
+                        case 'send': actionText = `ОТПРАВИЛ сообщение: "${data.details.message.substring(0, 30)}..."`; break;
+                        case 'read_msg': actionText = `ПРОЧИТАЛ сообщение ID: ${data.details.id.substring(0, 5)}...`; actionClass = 'read'; break;
+                        case 'delete': actionText = `УДАЛИЛ сообщение ID: ${data.details.id.substring(0, 5)}...`; break;
+                        default: actionText = data.action;
+                    }
+
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'log-entry-item';
+                    entryDiv.innerHTML = `
+                        <span class="time">[${time}]</span>
+                        <span class="user">${data.user}</span>
+                        <span class="${actionClass}"> ${actionText}</span>
+                        <span style="font-size: 9px; color: #aaa;">(${data.device})</span>
+                    `;
+                    logContent.appendChild(entryDiv);
+                });
+
+            } catch (e) {
+                logContent.innerHTML = `<span style="color:red;">Ошибка загрузки логов: ${e.message}</span>`;
+                console.error("Error loading audit log:", e);
+            }
         }
 
         // --- ВХОД И АВТОРИЗАЦИЯ ---
@@ -278,20 +372,17 @@
 
             const pass = document.getElementById('password').value;
             const name = document.getElementById('username').value.trim();
+            const chat = document.getElementById('chatname').value.trim(); // НОВОЕ
+
             const err = document.getElementById('login-error');
 
-            if (pass !== CHAT_PASSWORD) { 
-                err.innerText = "Неверный пароль!"; 
-                return; 
-            }
-            if (!name) { 
-                err.innerText = "Укажите имя!"; 
-                return; 
-            }
+            if (pass !== CHAT_PASSWORD) { err.innerText = "Неверный пароль!"; return; }
+            if (!name) { err.innerText = "Укажите имя!"; return; }
+            if (!chat) { err.innerText = "Укажите имя чата!"; return; }
 
             err.innerText = "Подключение...";
             
-            // Получение метаданных
+            // Получение метаданных (IP, Device)
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
@@ -305,6 +396,9 @@
             else currentUser.device = "Web";
 
             currentUser.name = name;
+            currentUser.chat = chat; // Сохраняем имя чата
+            
+            document.getElementById('current-chat-name').innerText = chat + " Chat";
 
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('chat-container').style.display = 'flex';
@@ -324,8 +418,11 @@
             document.addEventListener('mousemove', updateActivity);
             
             window.addEventListener('beforeunload', () => setUserStatus({ isOnline: false }));
+            
+            recordAudit('login'); // Запись в лог: ВХОД
         }
         
+        // ... (updateActivity, setUserStatus, checkInactivity, logout - логика статусов остается прежней) ...
         function updateActivity() {
             localStorage.setItem('lastActive', Date.now());
             if (Date.now() - lastStatusUpdateTime > 30000) {
@@ -337,8 +434,9 @@
             if (!db || !currentUser.name) return;
             
             try {
-                await db.collection('users').doc(currentUser.name).set({
+                await db.collection('users').doc(`${currentUser.chat}_${currentUser.name}`).set({ // Уникальный ключ по ЧАТ + ИМЯ
                     name: currentUser.name,
+                    chat: currentUser.chat,
                     ...statusUpdate,
                     device: currentUser.device,
                     ip: currentUser.ip,
@@ -361,39 +459,76 @@
 
         function logout() {
             setUserStatus({ isOnline: false });
+            recordAudit('logout'); // Запись в лог: ВЫХОД
             window.location.reload(true); 
         }
         
         // --- FIREBASE LISTENERS ---
         
         function setupFirestoreListeners() {
-            // 1. Слушатель сообщений
-            db.collection('messages').orderBy('timestamp', 'asc').onSnapshot(snapshot => {
-                logStatus('READ'); // Логируем получение
+            if (!currentUser.chat) return;
+            
+            // 1. Слушатель сообщений (используем имя чата)
+            db.collection(`chats/${currentUser.chat}/messages`).orderBy('timestamp', 'asc').onSnapshot(snapshot => {
+                logStatus('READ'); 
                 const messages = [];
-                snapshot.forEach(doc => messages.push({ ...doc.data(), id: doc.id }));
-                renderMessages(messages);
-                scrollToBottom();
+                const readPromises = [];
+
+                snapshot.docChanges().forEach(change => {
+                    const msg = { ...change.doc.data(), id: change.doc.id };
+                    messages.push(msg);
+
+                    // Если сообщение еще не доставлено и отправлено не мной:
+                    if (change.type === "added" && msg.status !== 'delivered' && msg.user !== currentUser.name) {
+                        // Помечаем как доставленное для записи в БД
+                        readPromises.push(markMessageAsDelivered(msg.id)); 
+                    }
+                });
+
+                Promise.all(readPromises).then(() => {
+                    // После пометки, рендерим сообщения
+                    renderMessages(messages);
+                    scrollToBottom();
+                });
             });
 
-            // 2. Слушатель статусов пользователей
-            db.collection('users').onSnapshot(snapshot => {
+            // 2. Слушатель статусов пользователей (фильтр по имени чата)
+            db.collection('users').where('chat', '==', currentUser.chat).onSnapshot(snapshot => {
                 const users = [];
                 snapshot.forEach(doc => users.push(doc.data()));
                 renderOnlineUsers(users);
                 renderTypingIndicator(users);
             });
         }
+        
+        // --- ЛОГИКА ДОСТАВКИ И СООБЩЕНИЙ ---
 
-        // --- ЛОГИКА ЧАТА ---
+        async function markMessageAsDelivered(msgId) {
+             const msgRef = db.collection(`chats/${currentUser.chat}/messages`).doc(msgId);
+             
+             try {
+                // Используем транзакцию, чтобы гарантировать, что статус обновлен корректно
+                await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(msgRef);
 
-        function handleTyping(event) {
-            setUserStatus({ isTyping: true });
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                setUserStatus({ isTyping: false });
-            }, 2000); 
+                    // Если сообщение уже доставлено или статус не 'sent', ничего не делаем
+                    if (!doc.exists || doc.data().status !== 'sent') {
+                        return;
+                    }
+
+                    // Обновляем статус на 'delivered'
+                    transaction.update(msgRef, { status: 'delivered' });
+                });
+
+                recordAudit('read_msg', { id: msgId }); // Запись в лог: ПРОЧИТАНО
+                return true;
+
+             } catch (e) {
+                 console.error("Transaction failed: ", e);
+                 return false;
+             }
         }
+
 
         async function sendMessage() {
             const input = document.getElementById('msg-input');
@@ -402,13 +537,17 @@
             if (!text) return;
 
             try {
-                await db.collection('messages').add({
+                // Отправка в коллекцию сообщений текущего чата
+                const docRef = await db.collection(`chats/${currentUser.chat}/messages`).add({
                     user: currentUser.name,
                     text: text,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    edited: false
+                    edited: false,
+                    status: 'sent' // НОВОЕ: статус по умолчанию
                 });
-                logStatus('WRITE', 'Сообщение отправлено'); // Логируем отправку
+                
+                logStatus('WRITE', 'Сообщение отправлено'); 
+                recordAudit('send', { id: docRef.id, message: text }); // Запись в лог: ОТПРАВЛЕНО
                 
                 input.value = '';
                 input.focus(); 
@@ -422,11 +561,12 @@
         
         async function deleteMessage(id) {
             if (!confirm("Удалить сообщение?")) return;
-            await db.collection('messages').doc(id).delete();
+            await db.collection(`chats/${currentUser.chat}/messages`).doc(id).delete();
+            recordAudit('delete', { id: id }); // Запись в лог: УДАЛЕНО
         }
 
         async function editMessage(id) {
-            const msgRef = db.collection('messages').doc(id);
+            const msgRef = db.collection(`chats/${currentUser.chat}/messages`).doc(id);
             const doc = await msgRef.get();
             if (!doc.exists) return;
 
@@ -460,14 +600,15 @@
                     
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); 
                     
-                    db.collection('messages').add({
+                    db.collection(`chats/${currentUser.chat}/messages`).add({
                         user: currentUser.name,
                         text: "🖼️ Изображение",
                         image: compressedDataUrl,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        edited: false
+                        edited: false,
+                        status: 'sent' 
                     });
-                    logStatus('WRITE', 'Изображение отправлено'); // Логируем отправку изображения
+                    logStatus('WRITE', 'Изображение отправлено'); 
                 };
             };
             reader.readAsDataURL(file);
@@ -492,11 +633,28 @@
                 const imgHtml = msg.image ? `<img src="${msg.image}" class="msg-img" onclick="window.open('${msg.image}')">` : '';
                 const actions = isMine ? `<span class="msg-actions" onclick="editMessage('${msg.id}')">✏️</span> <span class="msg-actions" onclick="deleteMessage('${msg.id}')">❌</span>` : '';
 
+                // Имя пользователя и цвет
+                const nameColor = isMine ? '#00796b' : '#333333'; 
+
+                // Статус сообщения (НОВОЕ)
+                let statusText = '';
+                let statusClass = '';
+                if (isMine) {
+                    if (msg.status === 'delivered') {
+                        statusText = 'Доставлено';
+                        statusClass = 'delivered';
+                    } else if (msg.status === 'sent') {
+                        statusText = 'Отправлено';
+                        statusClass = 'sent';
+                    }
+                }
+                const statusHtml = statusText ? `<span class="msg-status ${statusClass}">${statusText}</span>` : '';
+
                 div.innerHTML = `
-                    <span class="msg-sender" style="color:${isMine ? '#00796b' : '#333'}">${msg.user}</span>
+                    <span class="msg-sender" style="color:${nameColor}">${msg.user}</span>
                     <div style="margin-bottom:4px">${msg.text} ${editMark}</div>
                     ${imgHtml}
-                    <div class="msg-meta">${time} &nbsp; ${actions}</div>
+                    <div class="msg-meta">${time}${statusHtml} &nbsp; ${actions}</div>
                 `;
                 area.appendChild(div);
             });
@@ -511,7 +669,7 @@
             users.forEach(u => {
                 const lastSeenTime = u.lastSeen ? u.lastSeen.toDate().getTime() : now;
                 if (u.isOnline && now - lastSeenTime < 30000) {
-                    onlineText.push(`${u.name} (${u.device}, ${u.ip})`); 
+                    onlineText.push(`${u.name} (${u.device})`); // Убрали IP из UI для краткости
                 }
             });
             document.getElementById('online-users').innerText = "Онлайн: " + (onlineText.join(", ") || "никого");
