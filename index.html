@@ -61,6 +61,10 @@
         }
         
         /* === ЭКРАН СПИСКА КОМНАТ === */
+        #room-list-screen {
+             /* По умолчанию скрыт, показывается только после проверки имени */
+        }
+        
         .list-header {
             width: 100%;
             background: var(--header-bg);
@@ -254,6 +258,18 @@
 <body>
 
     <div id="main-container">
+        
+        <div id="error-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 0, 0, 0.9); color: white; z-index: 9999; padding: 20px; text-align: center;">
+            <h2>🚨 Критическая ошибка! 🚨</h2>
+            <p id="error-message">Неизвестная ошибка.</p>
+            <p>Возможные причины:</p>
+            <ul>
+                <li>❌ **Не обновлены правила Firebase Firestore** (самая частая причина!).</li>
+                <li>❌ Блокировщик рекламы/трекеров.</li>
+            </ul>
+            <button onclick="window.location.reload(true)" style="padding: 10px 20px; background: white; color: black; border: none; border-radius: 5px; margin-top: 20px;">Попробовать снова</button>
+        </div>
+
 
         <div id="room-list-screen">
             <div class="list-header">
@@ -340,7 +356,8 @@
             console.log('SDK: Initialized'); 
         } catch (e) {
             console.error("Firebase Initialization Error:", e);
-            alert("Ошибка инициализации Firebase. Проверьте ключи.");
+            document.getElementById('error-message').innerText = "Ошибка инициализации Firebase. Проверьте ключи в коде.";
+            document.getElementById('error-overlay').style.display = 'flex';
         }
 
         document.getElementById('send-btn').addEventListener('click', sendMessage);
@@ -399,9 +416,9 @@
         // --- ЛОГИН И УПРАВЛЕНИЕ КОМНАТАМИ ---
         
         /**
-         * Запрашивает имя пользователя. Если имя уже сохранено, просто возвращает его.
+         * Запрашивает имя пользователя. 
          * @param {boolean} forcePrompt - Принудительно запросить имя, даже если оно сохранено.
-         * @returns {Promise<boolean>} Возвращает true, если имя успешно получено/установлено.
+         * @returns {boolean} Возвращает true, если имя успешно получено/установлено.
          */
         function promptForUsername(forcePrompt = false) {
             const storedName = localStorage.getItem('currentUser_name');
@@ -422,9 +439,14 @@
                 if (currentUser.chat) leaveRoom(false);
                 return true;
             } else {
-                alert("Имя пользователя обязательно!");
-                // Если имя было принудительно сброшено, но не введено, просто остаемся на текущем экране.
-                return false;
+                // Если пользователь нажал Отмена или ввел пустое имя, используем заглушку, 
+                // чтобы не сломать логику.
+                if (!storedName) {
+                    currentUser.name = "Guest_" + Math.random().toString(36).substring(2, 7);
+                    localStorage.setItem('currentUser_name', currentUser.name);
+                }
+                document.getElementById('current-user-name').innerText = currentUser.name;
+                return false; 
             }
         }
         
@@ -434,14 +456,8 @@
         async function checkAndLoadUser() {
             if (!db) return;
             
-            // Шаг 1: Получаем имя пользователя. Если оно отсутствует, запрашиваем.
-            const userSet = promptForUsername(false); // Не принудительно
-            
-            if (!userSet) {
-                // Если имя не было установлено (например, пользователь нажал Отмена), 
-                // мы не можем продолжить. Остаемся на пустом экране.
-                return; 
-            }
+            // Шаг 1: Получаем имя пользователя.
+            promptForUsername(false); 
             
             // Шаг 2: Получаем метаданные (IP, Device)
             await getMetadata();
@@ -493,18 +509,30 @@
             } catch(e) {
                 console.error("Room action failed:", e);
                 err.innerText = "Произошла ошибка при доступе к комнате. Проверьте правила Firebase.";
+                // Дополнительный вывод ошибки, если это проблема с правилами
+                if (e.code === 'permission-denied') {
+                    document.getElementById('error-message').innerText = "Ошибка: Доступ к Firestore запрещен. Необходимо обновить правила безопасности в консоли Firebase.";
+                    document.getElementById('error-overlay').style.display = 'flex';
+                }
             }
         }
         
         // --- ЗАГРУЗКА И РЕНДЕРИНГ КОМНАТ ---
 
         function loadRooms() {
+             // Используем слушатель с try/catch для перехвата ошибок правил
              db.collection('rooms').onSnapshot(async snapshot => {
                 const roomListElement = document.getElementById('room-list');
                 roomListElement.innerHTML = '';
                 
                 const rooms = [];
                 snapshot.forEach(doc => rooms.push({ id: doc.id, ...doc.data() }));
+
+                // Если комнат нет, просто показываем экран с кнопкой "Создать"
+                if (rooms.length === 0) {
+                     roomListElement.innerHTML = '<p style="text-align: center; color: #888;">Нет активных комнат. Создайте первую!</p>';
+                     return;
+                }
 
                 // Получаем статусы активности
                 const activeStatusPromises = rooms.map(room => 
@@ -529,6 +557,13 @@
 
                     renderRoomEntry(room, activeUsersCount);
                 });
+            }, error => {
+                // Если произошла ошибка доступа (например, из-за правил Firebase)
+                console.error("Error loading rooms:", error);
+                if (error.code === 'permission-denied') {
+                    document.getElementById('error-message').innerText = "Ошибка: Доступ к Firestore запрещен. Необходимо обновить правила безопасности в консоли Firebase (allow read, write: if true;).";
+                    document.getElementById('error-overlay').style.display = 'flex';
+                }
             });
         }
         
@@ -619,6 +654,12 @@
                     renderMessages(messages);
                     scrollToBottom();
                 });
+            }, error => {
+                console.error("Error reading messages:", error);
+                 if (error.code === 'permission-denied') {
+                    document.getElementById('error-message').innerText = "Ошибка: Доступ к сообщениям запрещен. Необходимо обновить правила безопасности в консоли Firebase.";
+                    document.getElementById('error-overlay').style.display = 'flex';
+                }
             });
 
             // 2. Слушатель статусов пользователей: users (фильтр по имени чата)
